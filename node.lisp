@@ -42,11 +42,19 @@
       (setf children
 	    (cons child children)))))
 
+(defmethod remove-child ((this node) child &key)
+  "Removes a child."
+  (with-accessors ((children children)) this
+    (setf children
+	  (remove child children))))
+
+
 (defmethod update ((this node) &key parent force)
   "Update this and child nodes if changed."
   (when (or force (changed? this))
     (setf (current-transform this)
-	  (if parent (sb-cga:matrix* (transform this) (current-transform parent))
+	  (if parent
+	      (sb-cga:matrix* (current-transform parent) (transform this))
 	      (transform this)))
     (setf force t))
   
@@ -57,14 +65,22 @@
 
 (defmethod render ((this node) &key parent)
   "Render child objects. You don't need to build your application with nodes/render. This is just here to help."
+
   (when (changed? this)
     (update this :parent parent))
   
+  (gl:matrix-mode :modelview)
+
+  (load-matrix this)
+
   (loop for i in (children this)
      do (render i :parent this)))
 
 (defmethod render ((this list) &key parent matrix)
   "Render a list of rendables."
+
+  (load-matrix this)
+
   (loop for i in this
      do (render i :parent parent :matrix matrix)))
 
@@ -103,14 +119,16 @@
 (defmethod scale ((this node) x y z &optional (in-place t))
   "Inherited function for setting changed?"
   (if in-place
-    (setf (transform this) (sb-cga:matrix* (sb-cga:scale* (float x)
-							 (float y)
-							 (float z))
-					  (transform this)))
+    (setf (transform this)
+	  (sb-cga:matrix*
+	   (sb-cga:scale* (float x)
+			  (float y)
+			  (float z))
+	   (transform this)))
     (sb-cga:matrix* (sb-cga:scale* (float x)
-							 (float y)
-							 (float z))
-					  (transform this))))
+				   (float y)
+				   (float z))
+		    (transform this))))
 
 (defmethod translate ((this node) x y z &optional (in-place t))
   "Inherited function for setting changed?"
@@ -141,6 +159,7 @@
 
 
 (defmethod load-matrix ((this node) &key)
+
   (gl:load-matrix (or (current-transform this)
 		      (transform this))))
 

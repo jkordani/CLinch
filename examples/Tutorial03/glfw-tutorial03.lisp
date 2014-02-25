@@ -2,7 +2,7 @@
 (ql:quickload :clinch)
 
 (defvar shader)
-(defvar alpha)
+(defvar alpha 0)
 
 ;; alpha is the amount of alpha to use
 ;; vertexColor is the color value of the vertex
@@ -82,9 +82,9 @@ void main() {
 	(make-instance 'clinch:entity
 		       :shader  shader
 		       :indexes triangle-indices-buffer 
-		       :values `((:vertices ,triangle-point-buffer)
-				 (:attribute "vertexColor" ,triangle-color-buffer)
-				 (:uniform "alpha" alpha)))))
+		       :values (list (list :vertices triangle-point-buffer)
+				     (list :attribute "vertexColor" triangle-color-buffer)
+				     (list :uniform "alpha" alpha)))))
 
   
 (defun main-loop ()
